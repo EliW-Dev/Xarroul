@@ -15,6 +15,25 @@ public:
 	// Sets default values for this actor's properties
 	APickup_Weapon();
 
+	
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="MoveActor")
+	class USceneComponent* RootScene;
+
+	UPROPERTY(VisibleAnywhere,BlueprintReadOnly, Category= "MoveActor")
+	class UStaticMeshComponent* Mesh;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
+	class UBoxComponent * CollisionBox;
+
+	UPROPERTY(EditAnywhere,BlueprintReadWrite, Category="Settings")
+	FRotator Spin;
+	UPROPERTY(EditAnywhere,BlueprintReadWrite, Category="Settings")
+
+	FVector Bob;
+	UPROPERTY(EditAnywhere,BlueprintReadWrite, Category="Settings")
+
+	float BobSpeedMultiplier;
+
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
@@ -23,15 +42,6 @@ public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="MoveActor")
-		class USceneComponent* RootScene;
-
-	UPROPERTY(VisibleAnywhere,BlueprintReadOnly, Category= "MoveActor")
-		class UStaticMeshComponent* Mesh;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
-		class UBoxComponent * CollisionBox;
-
 	UFUNCTION()
 		void OnOverlapBegin(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
 
@@ -39,8 +49,10 @@ public:
 		void OnOverlapEnd(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
 
 protected:
-	UPROPERTY(EditAnywhere, Category="MoveActor")
-	float Speed;
-
-	
+	UPROPERTY(EditAnywhere,BlueprintReadWrite, Category="Settings")
+	float MovSpeed;
+	UPROPERTY(EditAnywhere,BlueprintReadWrite, Category="Settings")
+	float RotSpeed;
+	UPROPERTY(EditAnywhere,BlueprintReadWrite, Category="Settings")
+	FRotator RotRate;
 };

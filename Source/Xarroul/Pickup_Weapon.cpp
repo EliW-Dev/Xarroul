@@ -26,6 +26,11 @@ APickup_Weapon::APickup_Weapon()
 	CollisionBox->OnComponentBeginOverlap.AddDynamic(this, &APickup_Weapon::OnOverlapBegin);
 	CollisionBox->OnComponentEndOverlap.AddDynamic(this, &APickup_Weapon::OnOverlapEnd);
 
+
+	this->RotRate = FRotator(0.0f,180.0f,0.0f);
+	this->RotSpeed = 1.f;
+	this->MovSpeed = 250.f;
+
 }
 
 // Called when the game starts or when spawned
@@ -40,9 +45,12 @@ void APickup_Weapon::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
+	//Movement
 	FVector Location = GetActorLocation();
-	Location += GetActorForwardVector() * Speed * DeltaTime;
+	Location += GetActorForwardVector() * MovSpeed * DeltaTime;
 	SetActorLocation(Location);
+	//Spin
+	this->AddActorLocalRotation(this->RotRate * RotSpeed * DeltaTime);
 	
 }
 
