@@ -23,6 +23,12 @@ public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="MoveActor")
+		class USceneComponent* RootScene;
+
+	UPROPERTY(VisibleAnywhere,BlueprintReadOnly, Category= "MoveActor")
+		class UStaticMeshComponent* Mesh;
+
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
 		class UBoxComponent * CollisionBox;
 
@@ -31,4 +37,10 @@ public:
 
 	UFUNCTION()
 		void OnOverlapEnd(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
+
+protected:
+	UPROPERTY(EditAnywhere, Category="MoveActor")
+	float Speed;
+
+	
 };
