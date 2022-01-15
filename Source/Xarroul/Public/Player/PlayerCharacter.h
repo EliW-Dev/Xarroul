@@ -30,6 +30,19 @@ protected:
 
 	UPROPERTY(EditDefaultsOnly, Category = "Movement")
 	float RotationSpeed;
+
+	//health / damage
+	UFUNCTION()
+	void HandleTakeDamage(AActor* DamagedActor, float Damage, const UDamageType* DamageType, AController* InstigatedBy, AActor* DamageCauser);
+
+	UPROPERTY(EditDefaultsOnly)
+	float MaxHealth;
+
+	UPROPERTY(VisibleAnywhere)
+	float Health;
+
+	UPROPERTY()
+	bool bIsDead;
 	
 public:	
 	// Called every frame

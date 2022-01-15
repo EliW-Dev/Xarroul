@@ -37,6 +37,25 @@ void APlayerCharacter::BeginPlay()
 	{
 		Move->MovementMode = EMovementMode::MOVE_Flying;
 	}
+
+	this->OnTakeAnyDamage.AddDynamic(this, &APlayerCharacter::HandleTakeDamage);
+
+	bIsDead = false;
+	Health = MaxHealth;
+}
+
+void APlayerCharacter::HandleTakeDamage(AActor* DamagedActor, float Damage, const UDamageType* DamageType,
+	AController* InstigatedBy, AActor* DamageCauser)
+{
+	if(DamageCauser == DamagedActor || bIsDead == true) return;
+
+	Health -= Damage;
+
+	if(Health <= 0.0f)
+	{
+		bIsDead = true;
+		Destroy(); //TODO - don't just destroy actor...
+	}
 }
 
 // Called every frame
