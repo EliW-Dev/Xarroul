@@ -4,7 +4,30 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
+#include "Pickups/Pickup.h"
+#include "Weapons/Weapon.h"
 #include "PlayerCharacter.generated.h"
+
+class AWeapon;
+class AWeaponPlacementProxy;
+
+USTRUCT()
+struct FShipWeaponData
+{
+	GENERATED_BODY()
+
+	UPROPERTY()
+	AWeapon* WeaponType;
+
+	UPROPERTY()
+	int WeaponPosition;
+
+	FShipWeaponData()
+	{
+		WeaponType = nullptr;
+		WeaponPosition = 0;
+	}
+};
 
 UCLASS()
 class XARROUL_API APlayerCharacter : public ACharacter
@@ -24,7 +47,7 @@ protected:
 
 	UPROPERTY(EditDefaultsOnly, Category = "Camera")
 	class UCameraComponent* CameraComp;
-
+	
 	UPROPERTY(EditDefaultsOnly, Category = "Movement")
 	float MoveSpeed;
 
@@ -43,6 +66,32 @@ protected:
 
 	UPROPERTY()
 	bool bIsDead;
+
+	//weapon test
+	UPROPERTY(EditDefaultsOnly)
+	TSubclassOf<AWeapon> StarterWeapon;
+
+	UPROPERTY(VisibleAnywhere)
+	TSubclassOf<AWeapon> CollectedWeapon;
+		
+	UPROPERTY(EditDefaultsOnly)
+	TArray<FShipWeaponData> CurrentWeapons;
+
+	UPROPERTY(EditDefaultsOnly)
+	TArray<FName> WeaponAttachSockets;
+
+	bool bWeaponPlaceemntViewActive = false;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Camera")
+	float GameCameraHeight;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Camera")
+	float WeaponPlacementCameraHeight;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Weapons")
+	TSubclassOf<class AWeaponPlacementProxy> WeaponPlacementProxy;
+
+	TArray<AWeaponPlacementProxy*> WeaponPlacementProxies;
 	
 public:	
 	// Called every frame
@@ -56,6 +105,10 @@ public:
 	void StartFiring();
 	void StopFiring();
 	void ToggleWeaponPlacement();
+	void PlaceNewWeapon();
 
+	UFUNCTION()
+	void OnCollectedWeapon(TSubclassOf<AWeapon> Pickup);
+	
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 };
