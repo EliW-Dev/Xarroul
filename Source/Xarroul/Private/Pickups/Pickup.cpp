@@ -12,7 +12,7 @@ APickup::APickup()
 	PrimaryActorTick.bCanEverTick = true;
 
 	RootComponent = CreateDefaultSubobject<USceneComponent>(TEXT("Root"));
-
+	
 	CollisionSphere = CreateDefaultSubobject<USphereComponent>(TEXT("CollisionSphere"));
 	CollisionSphere->InitSphereRadius(20.0f);
 	CollisionSphere->SetupAttachment(RootComponent);
@@ -27,6 +27,7 @@ APickup::APickup()
 	PickupMesh->SetEnableGravity(false);
 	PickupMesh->SetGenerateOverlapEvents(false);
 
+	bReplicates = true;
 }
 
 // Called when the game starts or when spawned
@@ -43,8 +44,19 @@ void APickup::BeginPlay()
 
 void APickup::NotifyActorBeginOverlap(AActor* OtherActor)
 {
-	OnActorOverlap(OtherActor);
-	SetLifeSpan(0.3f);
+	if(OtherActor->GetLocalRole() != ROLE_Authority) return;
+
+	APlayerCharacter* PC = Cast<APlayerCharacter>(OtherActor);
+	if (PC)
+	{
+		ServerOnActorOverlap(PC);
+		SetLifeSpan(0.3f);
+	}	
+}
+
+void APickup::ServerOnActorOverlap_Implementation(APlayerCharacter* OtherActor)
+{
+	//ref child classes
 }
 
 // Called every frame

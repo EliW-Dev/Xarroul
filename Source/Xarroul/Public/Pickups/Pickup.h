@@ -37,10 +37,10 @@ protected:
 
 	UFUNCTION()
 	virtual void NotifyActorBeginOverlap(AActor* OtherActor) override;
-	
-	UFUNCTION()
-	virtual void OnActorOverlap(AActor* OtherActor) {};
 
+	UFUNCTION(Server, Reliable)
+	virtual void ServerOnActorOverlap(class APlayerCharacter* OtherActor);
+	
 public:	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;

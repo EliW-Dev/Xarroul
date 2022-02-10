@@ -10,6 +10,7 @@
 
 class AWeapon;
 class AWeaponPlacementProxy;
+class UNiagaraSystem;
 
 USTRUCT()
 struct FShipWeaponData
@@ -71,10 +72,10 @@ protected:
 	UPROPERTY(EditDefaultsOnly)
 	TSubclassOf<AWeapon> StarterWeapon;
 
-	UPROPERTY(VisibleAnywhere)
+	UPROPERTY(VisibleAnywhere, Replicated)
 	TSubclassOf<AWeapon> CollectedWeapon;
 		
-	UPROPERTY(EditDefaultsOnly)
+	UPROPERTY(EditDefaultsOnly, Replicated)
 	TArray<FShipWeaponData> CurrentWeapons;
 
 	UPROPERTY(EditDefaultsOnly)
@@ -92,20 +93,59 @@ protected:
 	TSubclassOf<class AWeaponPlacementProxy> WeaponPlacementProxy;
 
 	TArray<AWeaponPlacementProxy*> WeaponPlacementProxies;
+
+	void MoveForward(float Value);
+	void TurnRight(float Value);
+
+	/*UFUNCTION(Server, Reliable)
+	void StartFiring();
+
+	UFUNCTION(Server, Reliable)
+	void StopFiring();*/
+
+	UFUNCTION()
+	void StartFiring();
+
+	UFUNCTION()
+	void StopFiring();
 	
-public:	
+	void ToggleWeaponPlacement();
+
+	UFUNCTION()
+	void PlaceNewWeapon();
+
+	UFUNCTION(Server, Reliable)
+	void ServerPlaceNewWeapon(int PlacementPos);
+
+	UPROPERTY(BlueprintReadOnly, Category = "ship Rotation")
+	float InputRotValue;
+
+	UPROPERTY(BlueprintReadOnly, Category = "ship Rotation")
+	float InputThrustValue;
+	
+	//fx
+	UPROPERTY(EditDefaultsOnly, Category = "Engines")
+	UNiagaraSystem* ShipEngineFX;
+
+	UPROPERTY()
+	class UNiagaraComponent* ShipEngine_Left;
+
+	UPROPERTY()
+	UNiagaraComponent* ShipEngine_Right;
+	
+	UPROPERTY(EditAnywhere, Category = "Engines")
+	FName EngineSocket_Left = FName(TEXT("LeftEngie"));
+
+	UPROPERTY(EditAnywhere, Category = "Engines")
+	FName EngineSocket_Right = FName(TEXT("RightEngie"));
+	
+public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
 	// Called to bind functionality to input
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
-	void MoveForward(float Value);
-	void TurnRight(float Value);
-	void StartFiring();
-	void StopFiring();
-	void ToggleWeaponPlacement();
-	void PlaceNewWeapon();
 
 	UFUNCTION()
 	void OnCollectedWeapon(TSubclassOf<AWeapon> Pickup);

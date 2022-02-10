@@ -25,10 +25,9 @@ AProjectile::AProjectile()
 	MovementComponent->bShouldBounce = false;
 	MovementComponent->Bounciness = 0.0f;
 	MovementComponent->ProjectileGravityScale = 0.0f;
-	
-	bReplicates = true;
-	SetReplicateMovement(true);
 
+	bReplicates = true;
+	
 	DamageDelt = 20.0f;
 }
 
@@ -38,9 +37,6 @@ void AProjectile::BeginPlay()
 	Super::BeginPlay();
 
 	SetLifeSpan(LifeTime == NULL ? 3.0f : LifeTime);
-
-	MovementComponent->InitialSpeed = MoveSpeed;
-	MovementComponent->MaxSpeed = MoveSpeed;
 }
 
 void AProjectile::NotifyActorBeginOverlap(AActor* OtherActor)
@@ -50,7 +46,7 @@ void AProjectile::NotifyActorBeginOverlap(AActor* OtherActor)
 
 void AProjectile::FireInDirection(const FVector& ShootDirection)
 {
-	MovementComponent->Velocity = ShootDirection * MoveSpeed;	
+	MovementComponent->Velocity = ShootDirection * MovementComponent->InitialSpeed;	
 }
 
 

@@ -16,7 +16,7 @@ class XARROUL_API APickup_PlayerWeapon : public APickup
 
 protected:
 
-	virtual void OnActorOverlap(AActor* OtherActor) override;
+	virtual void ServerOnActorOverlap(class APlayerCharacter* OtherActor) override;
 
 	UPROPERTY(EditDefaultsOnly)
 	TSubclassOf<class AWeapon> PickupWeapon;

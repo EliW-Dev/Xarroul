@@ -5,10 +5,9 @@
 
 #include "Player/PlayerCharacter.h"
 
-void APickup_PlayerWeapon::OnActorOverlap(AActor* OtherActor)
+void APickup_PlayerWeapon::ServerOnActorOverlap(APlayerCharacter* OtherActor)
 {
-	APlayerCharacter* PC = Cast<APlayerCharacter>(OtherActor);
-	if(PC == nullptr) return;
+	Super::ServerOnActorOverlap(OtherActor);
 
-	PC->OnCollectedWeapon(PickupWeapon);
+	OtherActor->OnCollectedWeapon(PickupWeapon);
 }

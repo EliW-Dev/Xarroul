@@ -6,8 +6,11 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "GameFramework/PawnMovementComponent.h"
+#include "Net/UnrealNetwork.h"
 #include "Weapons/Weapon.h"
 #include "Weapons/WeaponPlacementProxy.h"
+#include "Niagara/Public/NiagaraComponent.h"
+#include "Niagara/Public/NiagaraFunctionLibrary.h"
 
 // Sets default values
 APlayerCharacter::APlayerCharacter()
@@ -50,7 +53,7 @@ void APlayerCharacter::BeginPlay()
 	Health = MaxHealth;
 
 	//add a starter weapon on spawn
-	if(StarterWeapon != nullptr)
+	if(StarterWeapon != nullptr && GetLocalRole() == ROLE_Authority)
 	{
 		FActorSpawnParameters SpawnParams;
 		SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
@@ -70,6 +73,25 @@ void APlayerCharacter::BeginPlay()
 		CurrentWeapons.Add(WeaponData);
 	}
 
+	//move to BP
+	/*if(ShipEngineFX && GetLocalRole() == ROLE_Authority)
+	{
+		USkeletalMeshComponent* MyMesh = GetMesh();
+		FTransform LE_Transform = MyMesh->GetSocketTransform(EngineSocket_Left, RTS_Component);
+		
+		/*ShipEngine_Left = UNiagaraFunctionLibrary::SpawnSystemAttached(ShipEngineFX, MyMesh, EngineSocket_Left, FVector::UpVector * 30.0f,
+			FRotator::ZeroRotator, EAttachLocation::SnapToTarget, true, true);#1#
+
+		ShipEngine_Left = UNiagaraFunctionLibrary::SpawnSystemAtLocation(GetWorld(), ShipEngineFX,
+			FVector::ZeroVector, FRotator::ZeroRotator, FVector(1), true, true);
+
+		FAttachmentTransformRules AttachRules = FAttachmentTransformRules::SnapToTargetNotIncludingScale;
+		//AttachRules.LocationRule = EAttachmentRule::SnapToTarget;
+		//AttachRules.RotationRule = EAttachmentRule::SnapToTarget;
+		
+		bool success = ShipEngine_Left->AttachToComponent(MyMesh, AttachRules, EngineSocket_Left);
+		UE_LOG(LogTemp, Warning, TEXT("Did particle attach: %s"), success? TEXT("Attach Success!") : TEXT("Attach Fail!"));
+	}*/
 }
 
 void APlayerCharacter::HandleTakeDamage(AActor* DamagedActor, float Damage, const UDamageType* DamageType,
@@ -108,6 +130,8 @@ void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 
 void APlayerCharacter::MoveForward(float Value)
 {
+	InputThrustValue = Value >= 0.0f? Value : Value / 3.0f;
+	
 	if (bWeaponPlaceemntViewActive || !Controller || Value == 0.0f) return;
 	
 	//SetActorLocation(GetActorLocation() + (GetActorForwardVector() * (Value * MoveSpeed)));
@@ -116,10 +140,26 @@ void APlayerCharacter::MoveForward(float Value)
 
 void APlayerCharacter::TurnRight(float Value)
 {
+	InputRotValue = Value;
+	
 	if (bWeaponPlaceemntViewActive || !Controller || Value == 0.0f)  return;
 	
 	AddControllerYawInput(Value * RotationSpeed * GetWorld()->GetDeltaSeconds());
 }
+
+/*void APlayerCharacter::StartFiring_Implementation()
+{
+	if(bWeaponPlaceemntViewActive) return;
+	
+	for(int i = 0; i < CurrentWeapons.Num(); i++)
+	{
+		AWeapon* Weapon = Cast<AWeapon>(CurrentWeapons[i].WeaponType);
+		if(Weapon != nullptr)
+		{
+			Weapon->StartFiring();
+		}
+	}
+}*/
 
 void APlayerCharacter::StartFiring()
 {
@@ -135,8 +175,20 @@ void APlayerCharacter::StartFiring()
 	}
 }
 
-void APlayerCharacter::StopFiring()
+/*void APlayerCharacter::StopFiring_Implementation()
 {
+	for(int i = 0; i < CurrentWeapons.Num(); i++)
+	{
+		AWeapon* Weapon = Cast<AWeapon>(CurrentWeapons[i].WeaponType);
+		if(Weapon != nullptr)
+		{
+			Weapon->StopFiring();
+		}
+	}
+}*/
+
+void APlayerCharacter::StopFiring()
+{	
 	for(int i = 0; i < CurrentWeapons.Num(); i++)
 	{
 		AWeapon* Weapon = Cast<AWeapon>(CurrentWeapons[i].WeaponType);
@@ -148,7 +200,7 @@ void APlayerCharacter::StopFiring()
 }
 
 void APlayerCharacter::ToggleWeaponPlacement()
-{
+{	
 	if(!bWeaponPlaceemntViewActive && CollectedWeapon == nullptr) return;
 	
 	bWeaponPlaceemntViewActive = !bWeaponPlaceemntViewActive;	
@@ -206,8 +258,11 @@ void APlayerCharacter::ToggleWeaponPlacement()
 }
 
 void APlayerCharacter::PlaceNewWeapon()
-{
-	if(!bWeaponPlaceemntViewActive || CollectedWeapon == nullptr) return;
+{	
+	if(!bWeaponPlaceemntViewActive || CollectedWeapon == nullptr)
+	{
+		return;
+	}
 
 	FHitResult Hit;
 	APlayerController* PC = Cast<APlayerController>(GetController());
@@ -220,16 +275,17 @@ void APlayerCharacter::PlaceNewWeapon()
 			{
 				int PlacementPos = Proxy->GetPositionID();
 
-				FActorSpawnParameters SpawnParams;
+				ServerPlaceNewWeapon(PlacementPos);
+
+				/*FActorSpawnParameters SpawnParams;
 				SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
 
 				AWeapon* Weapon = GetWorld()->SpawnActor<AWeapon>(CollectedWeapon, FVector::ZeroVector,
-				                                                  FRotator::ZeroRotator, SpawnParams);
+																  FRotator::ZeroRotator, SpawnParams);
 				if (Weapon)
 				{
 					Weapon->SetOwner(this);
-					Weapon->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale,
-					                          WeaponAttachSockets[PlacementPos]);
+					Weapon->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, WeaponAttachSockets[PlacementPos]);
 					
 					for (int i = 0; i < CurrentWeapons.Num(); i++)
 					{
@@ -248,16 +304,46 @@ void APlayerCharacter::PlaceNewWeapon()
 					CurrentWeapons.Add(WeaponData);
 
 					ToggleWeaponPlacement();
-				}
+				}*/
+
+				ToggleWeaponPlacement();
 			}
 		}
 	}
+}
 
-	//DEBUG
-	/*for (FShipWeaponData Data : CurrentWeapons)
+void APlayerCharacter::ServerPlaceNewWeapon_Implementation(int PlacementPos)
+{
+	FActorSpawnParameters SpawnParams;
+	SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+
+	AWeapon* Weapon = GetWorld()->SpawnActor<AWeapon>(CollectedWeapon, FVector::ZeroVector,
+													  FRotator::ZeroRotator, SpawnParams);
+	if (Weapon)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("Weapon Data: Position = %d, Type = %s"), Data.WeaponPosition, *Data.WeaponType->GetName());
-	}*/
+		Weapon->SetOwner(this);
+		Weapon->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, WeaponAttachSockets[PlacementPos]);
+					
+		for (int i = 0; i < CurrentWeapons.Num(); i++)
+		{
+			if (CurrentWeapons[i].WeaponPosition == PlacementPos)
+			{
+				CurrentWeapons[i].WeaponType->Destroy();
+				CurrentWeapons.RemoveAt(i, 1, true);
+				UE_LOG(LogTemp, Warning, TEXT("Weapon Destroyed!"));
+				break;
+			}
+		}
+
+		FShipWeaponData WeaponData = FShipWeaponData();
+		WeaponData.WeaponType = Weapon;
+		WeaponData.WeaponPosition = PlacementPos;
+		CurrentWeapons.Add(WeaponData);
+
+		CollectedWeapon = nullptr;
+		//ToggleWeaponPlacement();
+	}
+	
 }
 
 void APlayerCharacter::OnCollectedWeapon(TSubclassOf<AWeapon> Pickup)
@@ -268,5 +354,8 @@ void APlayerCharacter::OnCollectedWeapon(TSubclassOf<AWeapon> Pickup)
 void APlayerCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	DOREPLIFETIME(APlayerCharacter, CurrentWeapons);
+	DOREPLIFETIME(APlayerCharacter, CollectedWeapon);
 }
 

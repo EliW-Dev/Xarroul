@@ -39,8 +39,10 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category = "Projectile")
 	TSubclassOf<class AProjectile> ProjectileClass;
 	
-	UFUNCTION(Server, Reliable, WithValidation)
-	virtual void Fire();
+	UFUNCTION(Server, Reliable)
+	virtual void ServerFire();
+
+	void HandleFire();
 	
 public:	
 

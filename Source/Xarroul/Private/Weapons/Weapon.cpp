@@ -18,6 +18,7 @@ AWeapon::AWeapon()
 	CollisionBox = CreateDefaultSubobject<UBoxComponent>(TEXT("CollisionBox"));
 	CollisionBox->SetupAttachment(RootComponent);
 
+	bReplicates = true;
 }
 
 // Called when the game starts or when spawned
@@ -28,24 +29,7 @@ void AWeapon::BeginPlay()
 	bIsFiring = false;
 }
 
-void AWeapon::StartFiring()
-{
-	if(!bIsFiring)
-	{
-		bIsFiring = true;
-		UWorld* World = GetWorld();
-		World->GetTimerManager().SetTimer(FireIntervalTimer, this, &AWeapon::Fire, FireInterval, true, FireInterval);
-	}
-}
-
-void AWeapon::StopFiring()
-{
-	bIsFiring = false;
-	UWorld* World = GetWorld();
-	World->GetTimerManager().ClearTimer(FireIntervalTimer);
-}
-
-void AWeapon::Fire_Implementation()
+void AWeapon::ServerFire_Implementation()
 {
 	UWorld* World = GetWorld();
 	if (World)
@@ -66,8 +50,26 @@ void AWeapon::Fire_Implementation()
 	}
 }
 
-bool AWeapon::Fire_Validate()
+void AWeapon::HandleFire()
 {
-	return true;
+	ServerFire();
 }
+
+void AWeapon::StartFiring()
+{
+	if(!bIsFiring)
+	{
+		bIsFiring = true;
+		UWorld* World = GetWorld();
+		World->GetTimerManager().SetTimer(FireIntervalTimer, this, &AWeapon::HandleFire, FireInterval, true, FireInterval);
+	}
+}
+
+void AWeapon::StopFiring()
+{
+	bIsFiring = false;
+	UWorld* World = GetWorld();
+	World->GetTimerManager().ClearTimer(FireIntervalTimer);
+}
+
 
