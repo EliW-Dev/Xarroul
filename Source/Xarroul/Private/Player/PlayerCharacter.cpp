@@ -38,12 +38,6 @@ void APlayerCharacter::BeginPlay()
 {
 	Super::BeginPlay();
 
-	UCharacterMovementComponent* Move = GetCharacterMovement();
-	if(Move != nullptr)
-	{
-		Move->MovementMode = EMovementMode::MOVE_Flying;
-	}
-
 	this->OnTakeAnyDamage.AddDynamic(this, &APlayerCharacter::HandleTakeDamage);
 
 	SpringArmComp->TargetArmLength = GameCameraHeight;
@@ -77,6 +71,7 @@ void APlayerCharacter::BeginPlay()
 		WeaponData.WeaponPosition = 0;
 		CurrentWeapons.Add(WeaponData);
 	}
+
 }
 
 void APlayerCharacter::HandleTakeDamage(AActor* DamagedActor, float Damage, const UDamageType* DamageType,
@@ -114,7 +109,7 @@ void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 }
 
 void APlayerCharacter::MoveForward(float Value)
-{
+{	
 	const float tempThrustValue = Value >= 0.0f? Value : Value / 3.0f;
 	if(IsLocallyControlled())
 	{
@@ -125,7 +120,6 @@ void APlayerCharacter::MoveForward(float Value)
 	
 	if (bWeaponPlaceemntViewActive || !Controller || Value == 0.0f) return;
 	
-	//SetActorLocation(GetActorLocation() + (GetActorForwardVector() * (Value * MoveSpeed)));
 	AddMovementInput(GetActorForwardVector(), Value * MoveSpeed);
 }
 
@@ -155,20 +149,6 @@ void APlayerCharacter::Server_TurnRight_Implementation(float Value)
 	OnInputRotValueUpdated();
 }
 
-/*void APlayerCharacter::StartFiring_Implementation()
-{
-	if(bWeaponPlaceemntViewActive) return;
-	
-	for(int i = 0; i < CurrentWeapons.Num(); i++)
-	{
-		AWeapon* Weapon = Cast<AWeapon>(CurrentWeapons[i].WeaponType);
-		if(Weapon != nullptr)
-		{
-			Weapon->StartFiring();
-		}
-	}
-}*/
-
 void APlayerCharacter::StartFiring()
 {
 	if(bWeaponPlaceemntViewActive) return;
@@ -182,18 +162,6 @@ void APlayerCharacter::StartFiring()
 		}
 	}
 }
-
-/*void APlayerCharacter::StopFiring_Implementation()
-{
-	for(int i = 0; i < CurrentWeapons.Num(); i++)
-	{
-		AWeapon* Weapon = Cast<AWeapon>(CurrentWeapons[i].WeaponType);
-		if(Weapon != nullptr)
-		{
-			Weapon->StopFiring();
-		}
-	}
-}*/
 
 void APlayerCharacter::StopFiring()
 {	
@@ -281,38 +249,9 @@ void APlayerCharacter::PlaceNewWeapon()
 			AWeaponPlacementProxy* Proxy = Cast<AWeaponPlacementProxy>(Hit.GetActor());
 			if(Proxy)
 			{
-				int PlacementPos = Proxy->GetPositionID();
+				const int PlacementPos = Proxy->GetPositionID();
 
 				ServerPlaceNewWeapon(PlacementPos);
-
-				/*FActorSpawnParameters SpawnParams;
-				SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
-
-				AWeapon* Weapon = GetWorld()->SpawnActor<AWeapon>(CollectedWeapon, FVector::ZeroVector,
-																  FRotator::ZeroRotator, SpawnParams);
-				if (Weapon)
-				{
-					Weapon->SetOwner(this);
-					Weapon->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, WeaponAttachSockets[PlacementPos]);
-					
-					for (int i = 0; i < CurrentWeapons.Num(); i++)
-					{
-						if (CurrentWeapons[i].WeaponPosition == PlacementPos)
-						{
-							CurrentWeapons[i].WeaponType->Destroy();
-							CurrentWeapons.RemoveAt(i, 1, true);
-							UE_LOG(LogTemp, Warning, TEXT("Weapon Destroyed!"));
-							break;
-						}
-					}
-
-					FShipWeaponData WeaponData = FShipWeaponData();
-					WeaponData.WeaponType = Weapon;
-					WeaponData.WeaponPosition = PlacementPos;
-					CurrentWeapons.Add(WeaponData);
-
-					ToggleWeaponPlacement();
-				}*/
 
 				ToggleWeaponPlacement();
 			}
@@ -349,7 +288,6 @@ void APlayerCharacter::ServerPlaceNewWeapon_Implementation(int PlacementPos)
 		CurrentWeapons.Add(WeaponData);
 
 		CollectedWeapon = nullptr;
-		//ToggleWeaponPlacement();
 	}
 	
 }
