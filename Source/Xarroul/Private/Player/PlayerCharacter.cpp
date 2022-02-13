@@ -27,11 +27,10 @@ APlayerCharacter::APlayerCharacter()
 	CameraComp->SetupAttachment(SpringArmComp, USpringArmComponent::SocketName);
 	CameraComp->bUsePawnControlRotation = false;
 
-	MoveSpeed = 10.0f;
-	RotationSpeed = 10.0f;
-
 	GameCameraHeight = 1200.0f;
 	WeaponPlacementCameraHeight = 350.0f;
+
+	bReplicates = true;
 }
 
 // Called when the game starts or when spawned
@@ -52,6 +51,12 @@ void APlayerCharacter::BeginPlay()
 	bIsDead = false;
 	Health = MaxHealth;
 
+	//reset BP engine effects
+	InputThrustValue = 0.0f;
+	OnInputThrustValueUpdated();
+	InputRotationValue = 0.0f;
+	OnInputRotValueUpdated();
+	
 	//add a starter weapon on spawn
 	if(StarterWeapon != nullptr && GetLocalRole() == ROLE_Authority)
 	{
@@ -72,26 +77,6 @@ void APlayerCharacter::BeginPlay()
 		WeaponData.WeaponPosition = 0;
 		CurrentWeapons.Add(WeaponData);
 	}
-
-	//move to BP
-	/*if(ShipEngineFX && GetLocalRole() == ROLE_Authority)
-	{
-		USkeletalMeshComponent* MyMesh = GetMesh();
-		FTransform LE_Transform = MyMesh->GetSocketTransform(EngineSocket_Left, RTS_Component);
-		
-		/*ShipEngine_Left = UNiagaraFunctionLibrary::SpawnSystemAttached(ShipEngineFX, MyMesh, EngineSocket_Left, FVector::UpVector * 30.0f,
-			FRotator::ZeroRotator, EAttachLocation::SnapToTarget, true, true);#1#
-
-		ShipEngine_Left = UNiagaraFunctionLibrary::SpawnSystemAtLocation(GetWorld(), ShipEngineFX,
-			FVector::ZeroVector, FRotator::ZeroRotator, FVector(1), true, true);
-
-		FAttachmentTransformRules AttachRules = FAttachmentTransformRules::SnapToTargetNotIncludingScale;
-		//AttachRules.LocationRule = EAttachmentRule::SnapToTarget;
-		//AttachRules.RotationRule = EAttachmentRule::SnapToTarget;
-		
-		bool success = ShipEngine_Left->AttachToComponent(MyMesh, AttachRules, EngineSocket_Left);
-		UE_LOG(LogTemp, Warning, TEXT("Did particle attach: %s"), success? TEXT("Attach Success!") : TEXT("Attach Fail!"));
-	}*/
 }
 
 void APlayerCharacter::HandleTakeDamage(AActor* DamagedActor, float Damage, const UDamageType* DamageType,
@@ -130,7 +115,13 @@ void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 
 void APlayerCharacter::MoveForward(float Value)
 {
-	InputThrustValue = Value >= 0.0f? Value : Value / 3.0f;
+	const float tempThrustValue = Value >= 0.0f? Value : Value / 3.0f;
+	if(IsLocallyControlled())
+	{
+		InputThrustValue = tempThrustValue;
+		OnInputThrustValueUpdated();
+	}
+	Server_MoveForward(tempThrustValue);
 	
 	if (bWeaponPlaceemntViewActive || !Controller || Value == 0.0f) return;
 	
@@ -138,13 +129,30 @@ void APlayerCharacter::MoveForward(float Value)
 	AddMovementInput(GetActorForwardVector(), Value * MoveSpeed);
 }
 
+void APlayerCharacter::Server_MoveForward_Implementation(float Value)
+{
+	InputThrustValue = Value;
+	OnInputThrustValueUpdated();
+}
+
 void APlayerCharacter::TurnRight(float Value)
 {
-	InputRotValue = Value;
+	if(IsLocallyControlled())
+	{
+		InputRotationValue = Value;
+		OnInputRotValueUpdated();
+	}
+	Server_TurnRight(Value);
 	
 	if (bWeaponPlaceemntViewActive || !Controller || Value == 0.0f)  return;
 	
 	AddControllerYawInput(Value * RotationSpeed * GetWorld()->GetDeltaSeconds());
+}
+
+void APlayerCharacter::Server_TurnRight_Implementation(float Value)
+{
+	InputRotationValue = Value;
+	OnInputRotValueUpdated();
 }
 
 /*void APlayerCharacter::StartFiring_Implementation()
@@ -357,5 +365,7 @@ void APlayerCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Out
 
 	DOREPLIFETIME(APlayerCharacter, CurrentWeapons);
 	DOREPLIFETIME(APlayerCharacter, CollectedWeapon);
+	DOREPLIFETIME_CONDITION(APlayerCharacter, InputThrustValue, COND_SkipOwner);
+	DOREPLIFETIME_CONDITION(APlayerCharacter, InputRotationValue, COND_SkipOwner);
 }
 

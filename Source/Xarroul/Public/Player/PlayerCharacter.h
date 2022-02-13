@@ -95,7 +95,14 @@ protected:
 	TArray<AWeaponPlacementProxy*> WeaponPlacementProxies;
 
 	void MoveForward(float Value);
+	
+	UFUNCTION(Server, Reliable)
+	void Server_MoveForward(float Value);
+	
 	void TurnRight(float Value);
+
+	UFUNCTION(Server, Reliable)
+	void Server_TurnRight(float Value);
 
 	/*UFUNCTION(Server, Reliable)
 	void StartFiring();
@@ -117,11 +124,17 @@ protected:
 	UFUNCTION(Server, Reliable)
 	void ServerPlaceNewWeapon(int PlacementPos);
 
-	UPROPERTY(BlueprintReadOnly, Category = "ship Rotation")
-	float InputRotValue;
+	UPROPERTY(BlueprintReadOnly, ReplicatedUsing=OnInputRotValueUpdated)
+	float InputRotationValue;
+	
+	UFUNCTION(BlueprintImplementableEvent)
+	void OnInputRotValueUpdated();
 
-	UPROPERTY(BlueprintReadOnly, Category = "ship Rotation")
+	UPROPERTY(BlueprintReadOnly, ReplicatedUsing=OnInputThrustValueUpdated)
 	float InputThrustValue;
+	
+	UFUNCTION(BlueprintImplementableEvent)
+	void OnInputThrustValueUpdated();
 	
 	//fx
 	UPROPERTY(EditDefaultsOnly, Category = "Engines")
