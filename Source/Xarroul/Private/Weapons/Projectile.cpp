@@ -3,6 +3,8 @@
 
 #include "Weapons/Projectile.h"
 #include "GameFramework/ProjectileMovementComponent.h"
+#include "Kismet/GameplayStatics.h"
+#include "Player/PlayerCharacter.h"
 
 // Sets default values
 AProjectile::AProjectile()
@@ -41,7 +43,16 @@ void AProjectile::BeginPlay()
 
 void AProjectile::NotifyActorBeginOverlap(AActor* OtherActor)
 {
-	return;
+	APlayerCharacter* PC = Cast<APlayerCharacter>(OtherActor);
+	if(PC)
+	{
+		UGameplayStatics::ApplyDamage(PC, DamageDelt, nullptr, GetOwner(), DamageType);
+	}
+	
+	//spawn hit effect
+	ProjectileMesh->SetVisibility(false);
+	BoxComponent->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	SetLifeSpan(0.1f);
 }
 
 void AProjectile::FireInDirection(const FVector& ShootDirection)

@@ -6,11 +6,11 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "GameFramework/PawnMovementComponent.h"
+#include "Kismet/KismetSystemLibrary.h"
 #include "Net/UnrealNetwork.h"
 #include "Weapons/Weapon.h"
 #include "Weapons/WeaponPlacementProxy.h"
 #include "Niagara/Public/NiagaraComponent.h"
-#include "Niagara/Public/NiagaraFunctionLibrary.h"
 
 // Sets default values
 APlayerCharacter::APlayerCharacter()
@@ -179,8 +179,17 @@ void APlayerCharacter::ToggleWeaponPlacement()
 {	
 	if(!bWeaponPlaceemntViewActive && CollectedWeapon == nullptr) return;
 	
-	bWeaponPlaceemntViewActive = !bWeaponPlaceemntViewActive;	
+	bWeaponPlaceemntViewActive = !bWeaponPlaceemntViewActive;
 
+	OnToggleWeaponPlacement(bWeaponPlaceemntViewActive); //ref class BP - cheating I know...
+
+	//TODO - cache some of this. Gotta be kinda performance heavy.
+	FPostProcessSettings PostSettings = CameraComp->PostProcessSettings;
+	PostSettings.DepthOfFieldFocalDistance = bWeaponPlaceemntViewActive? 600.0f : 1200.0f;
+	PostSettings.DepthOfFieldDepthBlurRadius = bWeaponPlaceemntViewActive? 200.0f : 15.0f;
+	
+	CameraComp->PostProcessSettings = PostSettings;
+	
 	APlayerController* PC = Cast<APlayerController>(GetController());
 	if(PC == nullptr) return;
 	

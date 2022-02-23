@@ -82,6 +82,7 @@ void AXarroulInstancedStaticMeshActor::SetupBackgroundMeshs()
 				NewRot.Z = FMath::RandRange(-90.0f, 90.0f);
 				InstTransform.SetRotation(NewRot.GetNormalized());
 
+				
 				ISMComp->AddInstance(InstTransform);
 
 				if(i == 0 && x == 1)

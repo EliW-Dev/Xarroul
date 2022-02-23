@@ -151,6 +151,9 @@ protected:
 
 	UPROPERTY(EditAnywhere, Category = "Engines")
 	FName EngineSocket_Right = FName(TEXT("RightEngie"));
+
+	UFUNCTION(BlueprintImplementableEvent)
+	void OnToggleWeaponPlacement(bool IsPlacing);
 	
 public:
 	// Called every frame
