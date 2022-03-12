@@ -31,23 +31,44 @@ void AWeapon::BeginPlay()
 
 void AWeapon::ServerFire_Implementation()
 {
+	if(!bCanFireMultiple || FireRotationOffsets.IsEmpty())
+	{
+		const AProjectile* Projectile = GetNewProjectile();
+		GetNewProjectile()->FireInDirection(Projectile->GetActorForwardVector());
+	}
+	else
+	{
+		for (int i = 0; i < FireRotationOffsets.Num(); i++)
+		{
+			AProjectile* Projectile = GetNewProjectile();
+			if(Projectile)
+			{
+				Projectile->AddActorLocalRotation(FireRotationOffsets[i]);
+				FVector _ShootDir = Projectile->GetActorForwardVector();
+				
+				Projectile->FireInDirection(_ShootDir);
+			}
+		}
+	}
+}
+
+AProjectile* AWeapon::GetNewProjectile()
+{
 	UWorld* World = GetWorld();
 	if (World)
 	{
-		FTransform MuzzleTransform = WeaponMesh->GetSocketTransform(FirePointSocketName);
-		FVector Dir = MuzzleTransform.GetRotation().GetForwardVector();
+		const FTransform MuzzleTransform = WeaponMesh->GetSocketTransform(FirePointSocketName);
+		const FVector Dir = MuzzleTransform.GetRotation().GetForwardVector();
 		
 		FActorSpawnParameters SpawnParams;
-		SpawnParams.Owner = this;
+		SpawnParams.Owner = GetOwner();
 		SpawnParams.Instigator = GetInstigator();
 
-		// Spawn the projectile at the muzzle.
-		AProjectile* Projectile = World->SpawnActor<AProjectile>(ProjectileClass, MuzzleTransform.GetLocation(), Dir.Rotation(), SpawnParams);
-		if (Projectile)
-		{
-			Projectile->FireInDirection(Projectile->GetActorForwardVector());
-		}
+		return  World->SpawnActor<AProjectile>(ProjectileClass, MuzzleTransform.GetLocation(), Dir.Rotation(), SpawnParams);
+		
 	}
+
+	return nullptr;
 }
 
 void AWeapon::HandleFire()

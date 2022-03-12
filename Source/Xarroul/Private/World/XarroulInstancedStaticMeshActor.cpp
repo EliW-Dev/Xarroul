@@ -2,6 +2,7 @@
 
 
 #include "World/XarroulInstancedStaticMeshActor.h"
+#include "Components/InstancedStaticMeshComponent.h"
 
 AXarroulInstancedStaticMeshActor::AXarroulInstancedStaticMeshActor()
 {

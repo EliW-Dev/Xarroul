@@ -4,6 +4,7 @@
 #include "Weapons/Projectile.h"
 #include "GameFramework/ProjectileMovementComponent.h"
 #include "Kismet/GameplayStatics.h"
+#include "NiagaraFunctionLibrary.h"
 #include "Player/PlayerCharacter.h"
 
 // Sets default values
@@ -43,6 +44,11 @@ void AProjectile::BeginPlay()
 
 void AProjectile::NotifyActorBeginOverlap(AActor* OtherActor)
 {
+	if(OtherActor->GetOwner() == GetOwner() || OtherActor == GetOwner())
+	{
+		return;
+	}
+	
 	APlayerCharacter* PC = Cast<APlayerCharacter>(OtherActor);
 	if(PC)
 	{
@@ -52,6 +58,10 @@ void AProjectile::NotifyActorBeginOverlap(AActor* OtherActor)
 	//spawn hit effect
 	ProjectileMesh->SetVisibility(false);
 	BoxComponent->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	if(ExplosionFX)
+	{
+		UNiagaraFunctionLibrary::SpawnSystemAtLocation(GetWorld(), ExplosionFX, GetActorLocation(), FRotator::ZeroRotator, FVector(1) * FMath::RandRange(0.7f, 1.2f), true, true, ENCPoolMethod::AutoRelease);
+	}
 	SetLifeSpan(0.1f);
 }
 

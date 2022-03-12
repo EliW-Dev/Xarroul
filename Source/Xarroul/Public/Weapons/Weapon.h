@@ -31,6 +31,14 @@ protected:
 
 	UPROPERTY(EditDefaultsOnly, Category = "Shooting")
 	FName FirePointSocketName;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Shooting")
+	bool bCanFireMultiple;
+	
+	UPROPERTY(EditDefaultsOnly, Category = "Shooting")
+	TArray<FRotator> FireRotationOffsets;
+
+	class AProjectile* GetNewProjectile();
 	
 	FTimerHandle FireIntervalTimer;
 

@@ -46,6 +46,9 @@ protected:
 
 	UPROPERTY(EditDefaultsOnly, Category = "Projectile")
 	float LifeTime;
+
+	UPROPERTY(EditDefaultsOnly, Category = "VFX")
+	class UNiagaraSystem* ExplosionFX;
 	
 public:	
 
