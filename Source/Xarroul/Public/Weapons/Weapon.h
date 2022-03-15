@@ -44,6 +44,8 @@ protected:
 
 	bool bIsFiring;
 
+	float LastFireTime;
+
 	UPROPERTY(EditDefaultsOnly, Category = "Projectile")
 	TSubclassOf<class AProjectile> ProjectileClass;
 	

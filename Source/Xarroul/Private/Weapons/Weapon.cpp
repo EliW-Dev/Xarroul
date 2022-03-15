@@ -27,6 +27,7 @@ void AWeapon::BeginPlay()
 	Super::BeginPlay();
 
 	bIsFiring = false;
+	LastFireTime = -FireInterval;
 }
 
 void AWeapon::ServerFire_Implementation()
@@ -74,6 +75,7 @@ AProjectile* AWeapon::GetNewProjectile()
 void AWeapon::HandleFire()
 {
 	ServerFire();
+	LastFireTime = GetWorld()->TimeSeconds;
 }
 
 void AWeapon::StartFiring()
@@ -82,15 +84,18 @@ void AWeapon::StartFiring()
 	{
 		bIsFiring = true;
 		UWorld* World = GetWorld();
-		World->GetTimerManager().SetTimer(FireIntervalTimer, this, &AWeapon::HandleFire, FireInterval, true, FireInterval);
+		if(World)
+		{
+			const float FirstFireDelay = FMath::Max(0.0f, LastFireTime + FireInterval - GetWorld()->TimeSeconds);
+			GetWorldTimerManager().SetTimer(FireIntervalTimer, this, &AWeapon::HandleFire, FireInterval, true, FirstFireDelay);
+		}
 	}
 }
 
 void AWeapon::StopFiring()
 {
 	bIsFiring = false;
-	UWorld* World = GetWorld();
-	World->GetTimerManager().ClearTimer(FireIntervalTimer);
+	GetWorldTimerManager().ClearTimer(FireIntervalTimer);
 }
 
 
