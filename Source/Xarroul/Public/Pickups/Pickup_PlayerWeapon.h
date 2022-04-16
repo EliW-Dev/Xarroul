@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Pickups/Pickup.h"
+#include "Weapons/Weapon.h"
 #include "Pickup_PlayerWeapon.generated.h"
 
 /**
@@ -20,4 +21,7 @@ protected:
 
 	UPROPERTY(EditDefaultsOnly)
 	TSubclassOf<class AWeapon> PickupWeapon;
+
+public:
+
 };

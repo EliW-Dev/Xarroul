@@ -7,6 +7,16 @@
 #include "GameFramework/Actor.h"
 #include "Weapon.generated.h"
 
+UENUM()
+enum EWeaponType
+{
+	Generic     UMETA(DisplayName = "Generic Weapon"),
+	Rapid     UMETA(DisplayName = "Rapid Weapon"),
+	Spread     UMETA(DisplayName = "Spread Weapon"),
+	Homing     UMETA(DisplayName = "Homing Weapon"),
+	Beam     UMETA(DisplayName = "Beam Weapon"),
+};
+
 UCLASS()
 class XARROUL_API AWeapon : public AActor
 {
@@ -26,6 +36,9 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category = "Collision")
 	UBoxComponent* CollisionBox;
 
+	UPROPERTY(EditDefaultsOnly, Category = "Type")
+	TEnumAsByte<EWeaponType> TypeOfWeapon;
+	
 	UPROPERTY(EditDefaultsOnly, Category = "Shooting")
 	float FireInterval;
 
@@ -53,6 +66,13 @@ protected:
 	virtual void ServerFire();
 
 	void HandleFire();
+
+	//damage
+	UFUNCTION()
+	void HandleTakeDamage(AActor* DamagedActor, float Damage, const UDamageType* DamageType, AController* InstigatedBy, AActor* DamageCauser);
+
+	UPROPERTY(EditDefaultsOnly, Category = "Health")
+	float Health;
 	
 public:	
 
@@ -61,4 +81,6 @@ public:
 
 	UFUNCTION()
 	void StopFiring();
+
+	EWeaponType GetWeaponType() {return TypeOfWeapon; }
 };

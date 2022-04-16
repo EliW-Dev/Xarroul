@@ -2,21 +2,25 @@
 
 
 #include "Player/PlayerCharacter.h"
+
+#include "NiagaraFunctionLibrary.h"
 #include "Camera/CameraComponent.h"
+#include "Components/CapsuleComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "GameFramework/PawnMovementComponent.h"
 #include "Kismet/KismetSystemLibrary.h"
 #include "Net/UnrealNetwork.h"
+#include "Player/XarroulPlayerController.h"
 #include "Weapons/Weapon.h"
 #include "Weapons/WeaponPlacementProxy.h"
-#include "Niagara/Public/NiagaraComponent.h"
 
 // Sets default values
 APlayerCharacter::APlayerCharacter()
 {
  	// Set this pawn to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
-	PrimaryActorTick.bCanEverTick = true;
+	PrimaryActorTick.bCanEverTick = false;
+	PrimaryActorTick.bStartWithTickEnabled = false;
 	
 	SpringArmComp = CreateDefaultSubobject<USpringArmComponent>(TEXT("SpringArmComp"));
 	SpringArmComp->SetupAttachment(RootComponent);
@@ -84,7 +88,33 @@ void APlayerCharacter::HandleTakeDamage(AActor* DamagedActor, float Damage, cons
 	if(Health <= 0.0f)
 	{
 		bIsDead = true;
-		Destroy(); //TODO - don't just destroy actor...
+		OnRepIsDead();
+
+		//destroy current weapons
+		for (FShipWeaponData Weapon : CurrentWeapons)
+		{
+			Weapon.WeaponType->Destroy();
+		}
+		CurrentWeapons.Empty();
+	}
+}
+
+void APlayerCharacter::OnRepIsDead()
+{
+	if(ExplosionFX)
+	{
+		UNiagaraFunctionLibrary::SpawnSystemAtLocation(GetWorld(), ExplosionFX, GetActorLocation(), FRotator::ZeroRotator, FVector(1) * FMath::RandRange(3.0f, 4.0f), true, true);
+	}
+	
+	TogglePlayerActive(false);
+
+	AXarroulPlayerController* PC = Cast<AXarroulPlayerController>( GetController());
+	if(PC)
+	{
+		for (FShipWeaponData WD : CurrentWeapons)
+		{
+			PC->SpawnWeaponPickupOnDeath(WD.WeaponType->GetWeaponType(), WD.WeaponType->GetActorLocation());		
+		}
 	}
 }
 
@@ -92,7 +122,6 @@ void APlayerCharacter::HandleTakeDamage(AActor* DamagedActor, float Damage, cons
 void APlayerCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-
 }
 
 // Called to bind functionality to input
@@ -152,7 +181,7 @@ void APlayerCharacter::Server_TurnRight_Implementation(float Value)
 void APlayerCharacter::StartFiring()
 {
 	if(bWeaponPlaceemntViewActive) return;
-	
+
 	for(int i = 0; i < CurrentWeapons.Num(); i++)
 	{
 		AWeapon* Weapon = Cast<AWeapon>(CurrentWeapons[i].WeaponType);
@@ -306,12 +335,26 @@ void APlayerCharacter::OnCollectedWeapon(TSubclassOf<AWeapon> Pickup)
 	CollectedWeapon = Pickup;
 }
 
+void APlayerCharacter::RomoveWeapon(AWeapon* WeaponToRemove)
+{
+	for (int i = 0; i < CurrentWeapons.Num(); i++)
+	{
+		if(CurrentWeapons[i].WeaponType == WeaponToRemove)
+		{
+			CurrentWeapons[i].WeaponType->Destroy();
+			CurrentWeapons.RemoveAt(i);
+			return;
+		}
+	}
+}
+
 void APlayerCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
 	DOREPLIFETIME(APlayerCharacter, CurrentWeapons);
 	DOREPLIFETIME(APlayerCharacter, CollectedWeapon);
+	DOREPLIFETIME(APlayerCharacter, bIsDead);
 	DOREPLIFETIME_CONDITION(APlayerCharacter, InputThrustValue, COND_SkipOwner);
 	DOREPLIFETIME_CONDITION(APlayerCharacter, InputRotationValue, COND_SkipOwner);
 }

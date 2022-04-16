@@ -36,10 +36,13 @@ void APickup::BeginPlay()
 	Super::BeginPlay();
 
 	//safety check
-	if(RotationSpeed == NULL || RotationDelta == FRotator::ZeroRotator)
+	if(RotationSpeedMin == NULL || RotationSpeedMax == NULL || RotationDelta == FRotator::ZeroRotator)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("Rotation Data missing for: %s"), *this->GetName());
 	}
+
+	RotationSpeed = FMath::RandRange(RotationSpeedMin, RotationSpeedMax);
+	RotationSpeed *= FMath::RandBool() == true ? 1.0f : -1.0f;
 }
 
 void APickup::NotifyActorBeginOverlap(AActor* OtherActor)
@@ -64,6 +67,12 @@ void APickup::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
-	SetActorRotation(GetActorRotation() + (RotationDelta * DeltaTime));
+	SetActorRotation(GetActorRotation() + (RotationDelta * RotationSpeed * DeltaTime));
+}
+
+void APickup::AddImpulseForceToPickup(FVector Force)
+{
+	Force.Z = 0.0f;
+	PickupMesh->AddForce(Force);
 }
 

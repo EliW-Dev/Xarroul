@@ -48,12 +48,14 @@ void AProjectile::NotifyActorBeginOverlap(AActor* OtherActor)
 	{
 		return;
 	}
+
+	UGameplayStatics::ApplyDamage(OtherActor, DamageDelt, nullptr, GetOwner(), DamageType);
 	
-	APlayerCharacter* PC = Cast<APlayerCharacter>(OtherActor);
+	/*APlayerCharacter* PC = Cast<APlayerCharacter>(OtherActor);
 	if(PC)
 	{
 		UGameplayStatics::ApplyDamage(PC, DamageDelt, nullptr, GetOwner(), DamageType);
-	}
+	}*/
 	
 	//spawn hit effect
 	ProjectileMesh->SetVisibility(false);

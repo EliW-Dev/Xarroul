@@ -2,6 +2,8 @@
 
 
 #include "Weapons/Weapon.h"
+
+#include "Player/PlayerCharacter.h"
 #include "Weapons/Projectile.h"
 
 // Sets default values
@@ -28,17 +30,14 @@ void AWeapon::BeginPlay()
 
 	bIsFiring = false;
 	LastFireTime = -FireInterval;
+
+	this->OnTakeAnyDamage.AddDynamic(this, &AWeapon::HandleTakeDamage);
 }
 
 void AWeapon::ServerFire_Implementation()
 {
-	if(!bCanFireMultiple || FireRotationOffsets.IsEmpty())
-	{
-		const AProjectile* Projectile = GetNewProjectile();
-		GetNewProjectile()->FireInDirection(Projectile->GetActorForwardVector());
-	}
-	else
-	{
+	if(bCanFireMultiple && !FireRotationOffsets.IsEmpty())
+	{		
 		for (int i = 0; i < FireRotationOffsets.Num(); i++)
 		{
 			AProjectile* Projectile = GetNewProjectile();
@@ -50,7 +49,16 @@ void AWeapon::ServerFire_Implementation()
 				Projectile->FireInDirection(_ShootDir);
 			}
 		}
+		
+		return;
 	}
+
+	AProjectile* Projectile = GetNewProjectile();
+	if(Projectile)
+	{
+		Projectile->FireInDirection(Projectile->GetActorForwardVector());
+	}
+		
 }
 
 AProjectile* AWeapon::GetNewProjectile()
@@ -76,6 +84,22 @@ void AWeapon::HandleFire()
 {
 	ServerFire();
 	LastFireTime = GetWorld()->TimeSeconds;
+}
+
+void AWeapon::HandleTakeDamage(AActor* DamagedActor, float Damage, const UDamageType* DamageType, AController* InstigatedBy, AActor* DamageCauser)
+{
+	if(DamageCauser == DamagedActor) return;
+
+	Health -= Damage;
+
+	if(Health <= 0.0f)
+	{
+		APlayerCharacter* PC = Cast<APlayerCharacter>(GetOwner());
+		if(PC)
+		{
+			PC->RomoveWeapon(this);
+		}
+	}
 }
 
 void AWeapon::StartFiring()

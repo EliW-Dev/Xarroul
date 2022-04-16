@@ -65,7 +65,7 @@ protected:
 	UPROPERTY(VisibleAnywhere)
 	float Health;
 
-	UPROPERTY()
+	UPROPERTY(ReplicatedUsing = OnRepIsDead)
 	bool bIsDead;
 
 	//weapon test
@@ -154,6 +154,16 @@ protected:
 
 	UFUNCTION(BlueprintImplementableEvent)
 	void OnToggleWeaponPlacement(bool IsPlacing);
+
+	//death
+	UFUNCTION(BlueprintImplementableEvent, Category = "Player")
+	void TogglePlayerActive(bool isActive);
+	
+	UFUNCTION()
+	void OnRepIsDead();
+	
+	UPROPERTY(EditDefaultsOnly, Category = "VFX")
+	class UNiagaraSystem* ExplosionFX;
 	
 public:
 	// Called every frame
@@ -165,6 +175,9 @@ public:
 
 	UFUNCTION()
 	void OnCollectedWeapon(TSubclassOf<AWeapon> Pickup);
+
+	UFUNCTION()
+	void RomoveWeapon(AWeapon* WeaponToRemove);
 	
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 };

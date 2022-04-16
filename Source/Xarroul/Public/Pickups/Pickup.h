@@ -30,8 +30,14 @@ protected:
 	FRotator RotationDelta;
 	
 	UPROPERTY(EditDefaultsOnly)
-	float RotationSpeed;
+	float RotationSpeedMin;
 
+	UPROPERTY(EditDefaultsOnly)
+	float RotationSpeedMax;
+
+	UPROPERTY()
+	float RotationSpeed;
+	
 	UPROPERTY(EditDefaultsOnly)
 	float LifeTime;
 
@@ -44,5 +50,7 @@ protected:
 public:	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
+
+	void AddImpulseForceToPickup(FVector Force);
 
 };
